@@ -10,10 +10,25 @@ headers = {
 response = requests.get(url, headers=headers)
 soup = BeautifulSoup(response.text, "html.parser")
 
-# 尋找所有可能是下載清單的連結 (.csv, .xlsx, .pdf)
-print("尋找官方完整名單下載連結：")
+target_url = None
+file_ext = ".pdf"
+
 for link in soup.find_all("a", href=True):
     href = link["href"]
-    if any(ext in href.lower() for ext in [".csv", ".xlsx", ".pdf", "register"]):
-        full_url = urllib.parse.urljoin(url, href)
-        print(f"- 連結文字: {link.text.strip()} | 下載網址: {full_url}")
+    if any(ext in href.lower() for ext in [".csv", ".xlsx", ".pdf"]):
+        target_url = urllib.parse.urljoin(url, href)
+        if ".csv" in href.lower():
+            file_ext = ".csv"
+        elif ".xlsx" in href.lower():
+            file_ext = ".xlsx"
+        break
+
+if target_url:
+    print(f"開始下載檔案: {target_url}")
+    file_data = requests.get(target_url, headers=headers).content
+    filename = f"ind_sponsor_list{file_ext}"
+    with open(filename, "wb") as f:
+        f.write(file_data)
+    print(f"下載完成，已儲存為 {filename}")
+else:
+    print("未找到可下載的檔案連結。")
